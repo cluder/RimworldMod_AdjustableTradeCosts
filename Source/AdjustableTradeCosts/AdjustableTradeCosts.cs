@@ -93,7 +93,7 @@ namespace AdjustableTradeCosts
             return mInfo;
         }
 
-        // repolaces the hardcoded -15 goodwill trade costs
+        // replaces the hardcoded -15 goodwill trade costs
         [HarmonyTranspiler]
         static IEnumerable<CodeInstruction> TradeCostTranspiler(IEnumerable<CodeInstruction> instructions)
         {
