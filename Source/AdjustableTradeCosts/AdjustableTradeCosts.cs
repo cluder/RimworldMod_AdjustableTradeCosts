@@ -12,12 +12,12 @@ namespace AdjustableTradeCosts
 {
     public class TradeCostsSettings : ModSettings
     {
-        public int tradeCaravanCost = 15;
+        public int tradeCaravanCost = 5;
         public int militaryAidCost = 25;
 
         public override void ExposeData()
         {
-            Scribe_Values.Look(ref tradeCaravanCost, "tradeCaravanCost", 15);
+            Scribe_Values.Look(ref tradeCaravanCost, "tradeCaravanCost", 5);
             Scribe_Values.Look(ref militaryAidCost, "militaryAidCost", 25);
             base.ExposeData();
         }
@@ -45,6 +45,7 @@ namespace AdjustableTradeCosts
             listingStandard.Label("Military aid".Translate());
             listingStandard.TextFieldNumeric(ref settings.militaryAidCost, ref militaryAidCost);
             listingStandard.Gap();
+            listingStandard.Label("Please note: Rimworld must be restarted for the changes to take effect".Translate());
             listingStandard.End();
             base.DoSettingsWindowContents(inRect);
         }

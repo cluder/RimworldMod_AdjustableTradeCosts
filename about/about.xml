@@ -6,9 +6,16 @@
   <supportedVersions>
 	<li>1.1</li>
   </supportedVersions>
-  <description>V1.0
-    This mod lets you adjust the goodwill costs of requesting a trade caravan.
-	The default goodwill cost is reduced from 15 to 5.
+  <description>Adjustable Trade Costs
+  
+This mod lets you adjust the goodwill costs of requesting a trade caravan.
+The default goodwill cost is reduced from 15 to 5.
+
+Note: Rimworld needs to be restarted after a change in the mod settings.
+
+Dependencies: This mod only depends on Harmony.
+
+Source: https://github.com/cluder/RimworldMod_AdjustableTradeCosts
   </description>
   <modDependencies>
     <li>
