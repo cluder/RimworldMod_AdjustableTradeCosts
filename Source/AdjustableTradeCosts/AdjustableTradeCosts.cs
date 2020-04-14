@@ -51,7 +51,7 @@ namespace AdjustableTradeCosts
 
         public override string SettingsCategory()
         {
-            return "Adjustable Trader Costs".Translate();
+            return "Adjustable Trade Costs".Translate();
         }
     }
 
@@ -72,11 +72,11 @@ namespace AdjustableTradeCosts
                 //FileLog.Log("opcode " + i + ": " + codes[i]);
                 if (codes[i].opcode == OpCodes.Ldstr && "RequestTrader".Equals(Convert.ToString(codes[i].operand)))
                 {
-                    FileLog.Log("Found RequestTrader reference, adapt argument");
+                    //FileLog.Log("Found RequestTrader reference, adapt argument");
                     if (codes.Count > (i + 1) && codes[i + 1].opcode == OpCodes.Ldc_I4_S)
                     {
                         codes[i + 1].operand = Convert.ToSByte(newCost);
-                        FileLog.Log("changed RequestTrader goodwill costs to " + newCost);
+                        //FileLog.Log("changed RequestTrader goodwill costs to " + newCost);
                         // we are done
                         break;
                     }
@@ -103,11 +103,11 @@ namespace AdjustableTradeCosts
                 //FileLog.Log("opcode " + i + ": " + codes[i]);
                 if (codes[i].opcode == OpCodes.Ldstr && "RequestMilitaryAid".Equals(Convert.ToString(codes[i].operand)))
                 {
-                    FileLog.Log("Found RequestMilitaryAid reference, adapt argument");
+                    //FileLog.Log("Found RequestMilitaryAid reference, adapt argument");
                     if (codes.Count > (i + 1) && codes[i + 1].opcode == OpCodes.Ldc_I4_S)
                     {
                         codes[i + 1].operand = Convert.ToSByte(newCost);
-                        FileLog.Log("changed RequestMilitaryAid goodwill costs to " + newCost);
+                        //FileLog.Log("changed RequestMilitaryAid goodwill costs to " + newCost);
                         // we are done
                         break;
                     }
@@ -149,7 +149,7 @@ namespace AdjustableTradeCosts
             var instance = new HarmonyLib.Harmony("trader_costs");
             instance.PatchAll(Assembly.GetExecutingAssembly());
 
-            FileLog.Log("Harmony Loaded");
+            //FileLog.Log("Harmony Loaded");
         }
     }
 }
