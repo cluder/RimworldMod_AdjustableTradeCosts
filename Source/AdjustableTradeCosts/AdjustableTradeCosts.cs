@@ -14,12 +14,11 @@ namespace AdjustableTradeCosts
     {
         public int tradeCaravanCost = 15;
         public int militaryAidCost = 25;
-        public int personaCoreCost = 1500;
+
         public override void ExposeData()
         {
             Scribe_Values.Look(ref tradeCaravanCost, "tradeCaravanCost", 15);
             Scribe_Values.Look(ref militaryAidCost, "militaryAidCost", 25);
-            Scribe_Values.Look(ref personaCoreCost, "personaCoreCost", 1500);
             base.ExposeData();
         }
     }
@@ -30,7 +29,6 @@ namespace AdjustableTradeCosts
 
         string tradeCaravanCost;
         string militaryAidCost;
-        string personaCoreCost;
 
         public AdjustableTradeCosts(ModContentPack pack) : base(pack)
         {
@@ -47,8 +45,6 @@ namespace AdjustableTradeCosts
             listingStandard.Label("Military aid".Translate());
             listingStandard.TextFieldNumeric(ref settings.militaryAidCost, ref militaryAidCost);
             listingStandard.Gap();
-            listingStandard.Label("Persona core".Translate());
-            listingStandard.TextFieldNumeric(ref settings.personaCoreCost, ref personaCoreCost);
             listingStandard.End();
             base.DoSettingsWindowContents(inRect);
         }
@@ -59,69 +55,89 @@ namespace AdjustableTradeCosts
         }
     }
 
-    [HarmonyPatch]
-    public static class AdjustTradeCostsPatch
+    // ====================================================================
+    // patches the RequestTraderOption dialog option presented to the user
+    [HarmonyPatch(typeof(FactionDialogMaker), "RequestTraderOption")]
+    public static class RequestTraderOption_Patch
     {
-        [HarmonyTargetMethod]
-        static MethodBase CalculateMethod()
-        {
-            // get the class FactionDialogMaker
-            Type typeFactionDialogMaker = typeof(FactionDialogMaker);
-
-            // get innter type <>c__DisplayClass4_1
-            var innerTypes = typeFactionDialogMaker.GetNestedTypes(AccessTools.all)
-                .Where(t => t.Name.Equals("<>c__DisplayClass4_1"));
-            ;
-            if (innerTypes.Count() > 1)
-            {
-                FileLog.Log("found more then one innertype");
-                return null;
-            }
-            Type innerType = innerTypes.First();
-
-            // get method <RequestTraderOption>b__1
-            var methods = innerType.GetMethods(AccessTools.all)
-                .Where(m => m.Name.Equals("<RequestTraderOption>b__1"))
-                ;
-            if (methods.Count() > 1)
-            {
-                FileLog.Log("found more then one methods");
-                return null;
-            }
-
-            MethodInfo mInfo = methods.First();
-            return mInfo;
-        }
-
-        // repolaces the hardcoded -15 goodwill trade costs
         [HarmonyTranspiler]
         static IEnumerable<CodeInstruction> TradeCostTranspiler(IEnumerable<CodeInstruction> instructions)
         {
-            var newCost = -LoadedModManager.GetMod<AdjustableTradeCosts>().GetSettings<TradeCostsSettings>().tradeCaravanCost;
+            var newCost = LoadedModManager.GetMod<AdjustableTradeCosts>().GetSettings<TradeCostsSettings>().tradeCaravanCost;
+            var codes = new List<CodeInstruction>(instructions); // modifiable copy
 
-            // create a copy of the instructions to be able to modify them
-            var codes = new List<CodeInstruction>(instructions);
-
+            // search for correct argument and change it
             for (int i = 0; i < codes.Count; i++)
             {
-                //FileLog.Log("opcode " +i +": " +codes[i]);
-                // find opcode where -15 is pushed to the stack and modify it
-                if (codes[i].opcode == OpCodes.Ldc_I4_S)
+                //FileLog.Log("opcode " + i + ": " + codes[i]);
+                if (codes[i].opcode == OpCodes.Ldstr && "RequestTrader".Equals(Convert.ToString(codes[i].operand)))
                 {
-                    var operand = codes[i].operand;
-                    FileLog.Log("Found opcode Ldc i4 s ");
-
-                    if (operand.Equals(Convert.ToSByte(-15)))
+                    FileLog.Log("Found RequestTrader reference, adapt argument");
+                    if (codes.Count > (i + 1) && codes[i + 1].opcode == OpCodes.Ldc_I4_S)
                     {
-                        codes[i].operand = Convert.ToSByte(newCost);
-                        FileLog.Log("changed goodwill costs to " + newCost);
-
+                        codes[i + 1].operand = Convert.ToSByte(newCost);
+                        FileLog.Log("changed RequestTrader goodwill costs to " + newCost);
                         // we are done
                         break;
                     }
                 }
             }
             return codes.AsEnumerable();
+        }
+    }
+
+    // ========================================================================
+    // patches the RequestMilitaryAidOption dialog option presented to the user
+    [HarmonyPatch(typeof(FactionDialogMaker), "RequestMilitaryAidOption")]
+    public static class RequestMilitaryAidOption_Patch
+    {
+        [HarmonyTranspiler]
+        static IEnumerable<CodeInstruction> TradeCostTranspiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var newCost = LoadedModManager.GetMod<AdjustableTradeCosts>().GetSettings<TradeCostsSettings>().militaryAidCost;
+            var codes = new List<CodeInstruction>(instructions); // modifiable copy
+
+            // search for correct argument and change it
+            for (int i = 0; i < codes.Count; i++)
+            {
+                //FileLog.Log("opcode " + i + ": " + codes[i]);
+                if (codes[i].opcode == OpCodes.Ldstr && "RequestMilitaryAid".Equals(Convert.ToString(codes[i].operand)))
+                {
+                    FileLog.Log("Found RequestMilitaryAid reference, adapt argument");
+                    if (codes.Count > (i + 1) && codes[i + 1].opcode == OpCodes.Ldc_I4_S)
+                    {
+                        codes[i + 1].operand = Convert.ToSByte(newCost);
+                        FileLog.Log("changed RequestMilitaryAid goodwill costs to " + newCost);
+                        // we are done
+                        break;
+                    }
+                }
+            }
+            return codes.AsEnumerable();
+        }
+    }
+
+    // ========================================
+    // patches the TryAffectGoodwillWith Method 
+    [HarmonyPatch(typeof(Faction), "TryAffectGoodwillWith")]
+    public static class TryAffectGoodwillWith_Patch
+    {
+        static void Prefix(RimWorld.Faction other, ref int goodwillChange, bool canSendMessage, bool canSendHostilityLetter, ref string reason, RimWorld.Planet.GlobalTargetInfo? lookTarget)
+        {
+            var tradeCaravanCost = -LoadedModManager.GetMod<AdjustableTradeCosts>().GetSettings<TradeCostsSettings>().tradeCaravanCost;
+            var militaryAidCost = -LoadedModManager.GetMod<AdjustableTradeCosts>().GetSettings<TradeCostsSettings>().militaryAidCost;
+
+            String translatedReqTrader = "GoodwillChangedReason_RequestedTrader".Translate();
+            if (translatedReqTrader.Equals(reason))
+            {
+                goodwillChange = tradeCaravanCost;
+            }
+
+            String translatedMilitaAid = "GoodwillChangedReason_RequestedMilitaryAid".Translate();
+            if (translatedMilitaAid.Equals(reason))
+            {
+                goodwillChange = militaryAidCost;
+            }
         }
     }
 
@@ -136,55 +152,4 @@ namespace AdjustableTradeCosts
             FileLog.Log("Harmony Loaded");
         }
     }
-
-    [HarmonyPatch(typeof(ModsConfig), "TrySortMods")]
-    internal static class Example_MainMenu_Patch
-    {
-
-        //    [HarmonyPostfix]
-        //    public static void Postfix()
-        //    {
-        //        try
-        //        {
-        //            FileLog.Log("Methods ");
-        //            FileLog.Log("================== ");
-        //            foreach (methodinfo m in typeof(factiondialogmaker).getmethods())
-        //            {
-        //                FileLog.Log(m.Name + ": " + m);
-        //            }
-
-        //            FileLog.Log("");
-        //            FileLog.Log("Runtime Methods ");
-        //            FileLog.Log("================== ");
-        //            foreach (MethodInfo m in typeof(FactionDialogMaker).GetRuntimeMethods())
-        //            {
-        //                FileLog.Log(m.Name +": " +m);
-        //            }
-
-        //            FileLog.Log("");
-        //            FileLog.Log("Nested types ");
-        //            FileLog.Log("================== ");
-        //            foreach (Type m in typeof(FactionDialogMaker).GetNestedTypes())
-        //            {
-        //                FileLog.Log(m.Name + ": " + m);
-        //            }
-
-        //            FileLog.Log("");
-        //            FileLog.Log("Assembly Types");
-        //            FileLog.Log("================== ");
-        //            Assembly assem = typeof(FactionDialogMaker).Assembly;
-        //            Type inner = AccessTools.Inner(typeof(FactionDialogMaker), "<RequestTraderOption>b__1");
-        //            FileLog.Log("inner:" +inner);
-        //            //foreach (Type m in assem.GetTypes())
-        //            //{
-        //            //  FileLog.Log(m.Name + ": " + m);
-        //            //}
-        //        }
-        //        catch (Exception e)
-        //        {
-        //            FileLog.Log("Exception" +e);
-        //        }
-        //    }
-    }
-
 }

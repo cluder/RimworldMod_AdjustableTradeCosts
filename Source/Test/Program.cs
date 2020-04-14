@@ -21,14 +21,9 @@ namespace Test
         static private void test2()
         {
 
-            object op = (object)((sbyte)-15);
-
-            Debug.Print(op.ToString());
-            Debug.Print("" + Convert.ToSByte(op));
-
-            Debug.Print("" + op.Equals(Convert.ToSByte(-15)));
         }
-        static private void test1()
+
+        static private void FactionDialogMaker_delegate()
         {
             Debug.Print("Methods ");
             Debug.Print("================== ");
