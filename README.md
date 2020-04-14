@@ -14,7 +14,7 @@ Mod Settings
 
 ## Usage
 
-* checkout this repo into your Rimworld/mods folder.
+* Subscribe to the mod here [Steam Workshop: Adjustable Trade Costs](https://steamcommunity.com/sharedfiles/filedetails/?id=2061051232)
 * change the values in the mod settings and restart Rimworld.
 
 ## Used tools
