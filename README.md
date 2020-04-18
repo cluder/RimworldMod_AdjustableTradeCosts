@@ -1,8 +1,6 @@
 # RimworldMod_AdjustableTradeCosts
 
-This is a work in progress ...
-
-Rimworld Version: 1.1
+A mod for Rimworld Version: 1.1
 
 This mod lets you change the goodwill costs of requesting a trade caravan (default -15) or military aid (default -25) from an ally.
 
