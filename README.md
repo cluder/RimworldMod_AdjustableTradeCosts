@@ -10,7 +10,7 @@ These values are currently hardcoded in various places. This mod is using [Harmo
 
 Mod Settings
 
-![screenshot](/about/settings.png?raw=true "Settings")
+![screenshot](/about/preview.png?raw=true "Settings")
 
 ## Usage
 
